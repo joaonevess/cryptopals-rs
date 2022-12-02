@@ -36,7 +36,7 @@ pub fn break_single_byte_xor(ciphertext: &[u8]) -> u8 {
     max_b ^ b' '
 }
 
-fn repeating_key_xor(input: &[u8], key: &[u8]) -> Result<Vec<u8>, &'static str> {
+pub fn repeating_key_xor(input: &[u8], key: &[u8]) -> Result<Vec<u8>, &'static str> {
     if key.is_empty() {
         return Err("key cannot be empty");
     }
