@@ -15,3 +15,6 @@ cd cryptopals-rs
 cargo test
 ```
 This will run all of the tests, which will verify that the solutions are correct.
+
+## Contributing
+If you find a bug or want to improve one of the solutions, please feel free to submit a pull request :)
