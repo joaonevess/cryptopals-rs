@@ -31,8 +31,6 @@ pub fn break_single_byte_xor(ciphertext: &[u8]) -> u8 {
     max_b ^ b' '
 }
 
-//add tests
-
 #[cfg(test)]
 mod tests {
     use super::*;

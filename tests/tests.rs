@@ -4,8 +4,7 @@ mod tests {
 
     #[test]
     fn set_1_challenge_1() {
-        let input_str = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-        let raw_bytes = hex::decode(&input_str).unwrap();
+        let raw_bytes = hex::decode("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d").unwrap();
         let base64 = base64::encode(&raw_bytes);
         assert_eq!(
             base64,
