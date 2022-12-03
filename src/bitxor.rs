@@ -1,30 +1,23 @@
 use crate::score_plaintext::english_score;
 
-pub fn expand_key(key: &[u8], len: usize) -> Vec<u8> {
-    key.iter().cycle().take(len).copied().collect()
-}
-
-pub fn xor(a: &[u8], b: &[u8]) -> Result<Vec<u8>, &'static str> {
-    // Make sure the slices are the same length
+pub fn xor_slices(a: &[u8], b: &[u8]) -> Result<Vec<u8>, &'static str> {
     let length = a.len();
     if length != b.len() {
         return Err("slices have different lengths");
     }
 
-    // Zip the slices together and xor the elements
-    let result = a.iter().zip(b.iter()).map(|(x, y)| x ^ y).collect();
-    Ok(result)
+    Ok(a.iter().zip(b.iter()).map(|(x, y)| x ^ y).collect())
 }
 
-pub fn break_single_byte_xor(ciphertext: &[u8]) -> (u8, f32, String) {
+pub fn crack_single_byte_xor(ciphertext: &[u8]) -> (u8, f32, String) {
     let mut best_key = 0;
     let mut best_score = f32::MAX;
     let mut best_plaintext = String::new();
-
     let mut expanded_key = vec![0; ciphertext.len()];
+
     for key in 0..=255 as u8 {
-        expanded_key = expanded_key.iter().map(|_| key).collect();
-        let decrypted = match xor(ciphertext, &expanded_key) {
+        expanded_key.fill(key);
+        let decrypted = match xor_slices(ciphertext, &expanded_key) {
             Ok(v) => v,
             Err(_) => continue,
         };
@@ -41,11 +34,15 @@ pub fn break_single_byte_xor(ciphertext: &[u8]) -> (u8, f32, String) {
     (best_key, best_score, best_plaintext)
 }
 
+pub fn expand_key(key: &[u8], len: usize) -> Vec<u8> {
+    key.iter().cycle().take(len).copied().collect()
+}
+
 pub fn xor_repeating_key(input: &[u8], key: &[u8]) -> Result<Vec<u8>, &'static str> {
     if key.is_empty() {
         return Err("key cannot be empty");
     }
-    Ok(xor(input, &expand_key(key, input.len()))?)
+    Ok(xor_slices(input, &expand_key(key, input.len()))?)
 }
 
 #[cfg(test)]
@@ -58,7 +55,7 @@ mod tests {
         let raw_bytes1 = hex::decode("1c0111001f010100061a024b53535009181c").unwrap();
         let raw_bytes2 = hex::decode("686974207468652062756c6c277320657965").unwrap();
         let expected_xor = hex::decode("746865206b696420646f6e277420706c6179").unwrap();
-        let xor_bytes = xor(&raw_bytes1, &raw_bytes2).unwrap();
+        let xor_bytes = xor_slices(&raw_bytes1, &raw_bytes2).unwrap();
         assert_eq!(xor_bytes, expected_xor);
     }
 
@@ -67,7 +64,7 @@ mod tests {
         // Test XORing two slices of bytes with different lenghts
         let raw_bytes1 = hex::decode("1c0111001f010100061a024b53535009181c").unwrap();
         let raw_bytes2 = hex::decode("686974207468652062756c6c277320657965").unwrap();
-        let xor_bytes = xor(&raw_bytes1, &raw_bytes2[0..10]);
+        let xor_bytes = xor_slices(&raw_bytes1, &raw_bytes2[0..10]);
         assert!(xor_bytes.is_err());
     }
 
@@ -78,8 +75,9 @@ mod tests {
             hex::decode("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
                 .unwrap();
         let expected_key = 'X' as u8;
-        let (key, _, _) = break_single_byte_xor(&ciphertext);
+        let (key, _, plaintext) = crack_single_byte_xor(&ciphertext);
         assert_eq!(key, expected_key);
+        assert_eq!(plaintext, "Cooking MC's like a pound of bacon");
     }
 
     #[test]
