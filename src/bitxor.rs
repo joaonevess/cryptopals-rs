@@ -1,8 +1,7 @@
 use crate::score_plaintext::english_score;
 
 pub fn xor_slices(a: &[u8], b: &[u8]) -> Result<Vec<u8>, &'static str> {
-    let length = a.len();
-    if length != b.len() {
+    if a.len() != b.len() {
         return Err("slices have different lengths");
     }
 
