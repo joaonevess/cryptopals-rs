@@ -1,7 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use std::io::BufRead;
-
     use cryptopals_rs::*;
 
     #[test]
@@ -17,7 +15,7 @@ mod tests {
     fn set_1_challenge_2() {
         let raw_bytes1 = hex::decode("1c0111001f010100061a024b53535009181c").unwrap();
         let raw_bytes2 = hex::decode("686974207468652062756c6c277320657965").unwrap();
-        let xor_bytes = xor::xor_slices(&raw_bytes1, &raw_bytes2).unwrap();
+        let xor_bytes = bitxor::xor_slices(&raw_bytes1, &raw_bytes2).unwrap();
 
         assert_eq!(
             hex::encode(&xor_bytes),
@@ -31,24 +29,28 @@ mod tests {
             hex::decode("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
                 .unwrap();
 
-        let (_, _, plaintext) = xor::crack_single_byte_xor(&ciphertext);
+        let (_, _, plaintext) = bitxor::crack_single_byte_xor(&ciphertext);
         assert_eq!(plaintext, "Cooking MC's like a pound of bacon");
     }
 
     #[test]
     fn set_1_challenge_4() {
-        let file = std::fs::File::open("tests/challengedata/4.txt").unwrap();
-        let reader = std::io::BufReader::new(file);
+        use std::fs::File;
+        use std::io::{BufRead, BufReader};
+
+        let file = File::open("tests/challengedata/4.txt").unwrap();
+        let reader = BufReader::new(file);
         let mut best_score = f32::MAX;
         let mut best_line = String::new();
 
-        for line in reader.lines().map(|line| line.unwrap()) {
+        for line in reader.lines() {
+            let line = line.unwrap();
             let ciphertext = hex::decode(&line).unwrap();
-            let (_, score, best_plaintext) = xor::crack_single_byte_xor(&ciphertext);
+            let (_, score, potential_plaintext) = bitxor::crack_single_byte_xor(&ciphertext);
 
             if score < best_score {
                 best_score = score;
-                best_line = best_plaintext;
+                best_line = potential_plaintext;
             }
         }
         assert_eq!(best_line, "Now that the party is jumping\n");
@@ -58,8 +60,8 @@ mod tests {
     fn set_1_challenge_5() {
         let raw_bytes =
             b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
-        let key = xor::expand_key(b"ICE", raw_bytes.len());
-        let ciphertext = xor::xor_slices(raw_bytes, &key).unwrap();
+
+        let ciphertext = bitxor::xor_repeating_key(raw_bytes, &b"ICE".to_vec()).unwrap();
 
         assert_eq!(
             hex::encode(&ciphertext),
