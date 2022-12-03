@@ -16,17 +16,17 @@ pub fn crack_single_byte_xor(ciphertext: &[u8]) -> (u8, f32, String) {
 
     for key in 0..=255 as u8 {
         expanded_key.fill(key);
-        let decrypted = match xor_slices(ciphertext, &expanded_key) {
+        let potential_plaintext = match xor_slices(ciphertext, &expanded_key) {
             Ok(v) => v,
             Err(_) => continue,
         };
 
-        let score = english_score(&decrypted);
+        let score = english_score(&potential_plaintext);
 
         if score < best_score {
             best_key = key;
             best_score = score;
-            best_plaintext = String::from_utf8_lossy(&decrypted).to_string();
+            best_plaintext = String::from_utf8_lossy(&potential_plaintext).to_string();
         }
     }
 
