@@ -1,3 +1,5 @@
+use crate::score_plaintext::english_score;
+
 pub fn expand_key(key: &[u8], len: usize) -> Vec<u8> {
     key.iter().cycle().take(len).copied().collect()
 }
@@ -14,26 +16,29 @@ pub fn xor(a: &[u8], b: &[u8]) -> Result<Vec<u8>, &'static str> {
     Ok(result)
 }
 
-pub fn break_single_byte_xor(ciphertext: &[u8]) -> u8 {
-    // Create a frequency array of the ciphertext
-    let mut freq = [0; 256];
-    for &b in ciphertext {
-        freq[b as usize] += 1;
-    }
+pub fn break_single_byte_xor(ciphertext: &[u8]) -> (u8, f32, String) {
+    let mut best_key = 0;
+    let mut best_score = f32::MAX;
+    let mut best_plaintext = String::new();
 
-    // Find the byte with the highest frequency in the ciphertext
-    let mut max_b = 0;
-    let mut max_count = 0;
-    for (b, &count) in freq.iter().enumerate() {
-        if count > max_count {
-            max_b = b as u8;
-            max_count = count;
+    let mut expanded_key = vec![0; ciphertext.len()];
+    for key in 0..=255 as u8 {
+        expanded_key = expanded_key.iter().map(|_| key).collect();
+        let decrypted = match xor(ciphertext, &expanded_key) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+
+        let score = english_score(&decrypted);
+
+        if score < best_score {
+            best_key = key;
+            best_score = score;
+            best_plaintext = String::from_utf8_lossy(&decrypted).to_string();
         }
     }
 
-    // The most common byte in English text is the space character
-    // We can use this to find the key byte
-    max_b ^ b' '
+    (best_key, best_score, best_plaintext)
 }
 
 pub fn repeating_key_xor(input: &[u8], key: &[u8]) -> Result<Vec<u8>, &'static str> {
@@ -63,7 +68,7 @@ mod tests {
     }
 
     #[test]
-    fn test_xor_2() {
+    fn test_xor_err() {
         // Test XORing two slices of bytes with different lenghts
         let raw_bytes1 = hex::decode("1c0111001f010100061a024b53535009181c").unwrap();
         let raw_bytes2 = hex::decode("686974207468652062756c6c277320657965").unwrap();
@@ -78,7 +83,7 @@ mod tests {
             hex::decode("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
                 .unwrap();
         let expected_key = 'X' as u8;
-        let key = break_single_byte_xor(&ciphertext);
+        let (key, _, _) = break_single_byte_xor(&ciphertext);
         assert_eq!(key, expected_key);
     }
 
