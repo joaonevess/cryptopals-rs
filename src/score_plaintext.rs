@@ -44,7 +44,7 @@ fn is_alphabetic(c: u8) -> bool {
     (c >= b'A' && c <= b'Z') || (c >= b'a' && c <= b'z')
 }
 
-pub fn get_bytes_count(bytes: &[u8]) -> HashMap<u8, f32> {
+pub fn get_byte_frequencies(bytes: &[u8]) -> HashMap<u8, f32> {
     let mut counts: HashMap<u8, f32> = HashMap::new();
 
     for &c in bytes {
@@ -72,7 +72,7 @@ pub fn english_score(bytes: &[u8]) -> f32 {
         return f32::MAX;
     }
 
-    get_bytes_count(bytes)
+    get_byte_frequencies(bytes)
         .iter()
         .map(|(c, count)| {
             let expected = ENGLISH_FREQUENCIES.get(c).unwrap_or(&0.0);
