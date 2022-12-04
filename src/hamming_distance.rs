@@ -18,6 +18,10 @@ mod tests {
             hamming_distance(b"this is a test", b"wokka wokka!!!"),
             Ok(37)
         );
+        assert_eq!(
+            hamming_distance(b"this is a test", b"this is a test"),
+            Ok(0)
+        );
     }
     #[test]
     fn test_hamming_distance_diff_len() {
